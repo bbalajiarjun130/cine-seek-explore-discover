@@ -1,26 +1,25 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import PageLayout from "@/components/layout/PageLayout";
+import SearchBar from "@/components/movies/SearchBar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Separator } from "@/components/ui/separator";
-import { GenreCheckboxes } from "@/components/movies/GenreCheckboxes";
 import { mockMovies } from "@/data/mockMovies";
 import { Movie } from "@/types/movie";
 import MovieCard from "@/components/movies/MovieCard";
+import { GenreCheckboxes } from "@/components/movies/GenreCheckboxes";
 
 const AdvancedSearch = () => {
-  const currentYear = new Date().getFullYear();
-  const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [title, setTitle] = useState("");
   const [director, setDirector] = useState("");
-  const [yearRange, setYearRange] = useState([1900, currentYear]);
+  const [actor, setActor] = useState("");
+  const [yearRange, setYearRange] = useState<[number, number]>([1900, new Date().getFullYear()]);
+  const [ratingRange, setRatingRange] = useState<[number, number]>([0, 10]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [searchPerformed, setSearchPerformed] = useState(false);
-
+  const [results, setResults] = useState<Movie[]>([]);
+  
   const handleGenreChange = (genre: string, checked: boolean) => {
     if (checked) {
       setSelectedGenres([...selectedGenres, genre]);
@@ -30,101 +29,153 @@ const AdvancedSearch = () => {
   };
 
   const handleSearch = () => {
-    const results = mockMovies.filter(movie => {
-      const matchesTitle = title ? movie.title.toLowerCase().includes(title.toLowerCase()) : true;
-      const matchesDirector = director ? movie.director.toLowerCase().includes(director.toLowerCase()) : true;
-      const matchesYear = movie.year >= yearRange[0] && movie.year <= yearRange[1];
-      const matchesGenre = selectedGenres.length === 0 || 
-        selectedGenres.some(genre => movie.genre.includes(genre));
+    // In a real app, this would be an API call
+    // For now, we'll filter the mock data
+    const filtered = mockMovies.filter(movie => {
+      // Filter by title
+      if (title && !movie.title.toLowerCase().includes(title.toLowerCase())) {
+        return false;
+      }
       
-      return matchesTitle && matchesDirector && matchesYear && matchesGenre;
+      // Filter by director
+      if (director && !movie.director.toLowerCase().includes(director.toLowerCase())) {
+        return false;
+      }
+      
+      // Filter by actor
+      if (actor && !movie.cast.some(actor => actor.toLowerCase().includes(actor.toLowerCase()))) {
+        return false;
+      }
+      
+      // Filter by year
+      if (movie.year < yearRange[0] || movie.year > yearRange[1]) {
+        return false;
+      }
+      
+      // Filter by rating
+      if (movie.rating < ratingRange[0] || movie.rating > ratingRange[1]) {
+        return false;
+      }
+      
+      // Filter by genres
+      if (selectedGenres.length > 0 && 
+          !selectedGenres.some(genre => movie.genre.includes(genre))) {
+        return false;
+      }
+      
+      return true;
     });
     
-    setSearchResults(results);
-    setSearchPerformed(true);
+    setResults(filtered);
+  };
+
+  const handleReset = () => {
+    setTitle("");
+    setDirector("");
+    setActor("");
+    setYearRange([1900, new Date().getFullYear()]);
+    setRatingRange([0, 10]);
+    setSelectedGenres([]);
+    setResults([]);
   };
 
   return (
     <PageLayout>
-      <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-6">Advanced Search</h1>
+      <div className="container py-8 md:py-12">
+        <h1 className="text-3xl font-bold mb-8">Advanced Search</h1>
         
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Search Filters</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8">
+          <div className="space-y-6 border border-border/50 p-6 rounded-lg bg-card/50">
+            <div className="space-y-4">
+              <div>
                 <Label htmlFor="title">Movie Title</Label>
-                <Input 
-                  id="title" 
-                  placeholder="Enter movie title..." 
+                <Input
+                  id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
               
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="director">Director</Label>
-                <Input 
-                  id="director" 
-                  placeholder="Enter director name..." 
+                <Input
+                  id="director"
                   value={director}
                   onChange={(e) => setDirector(e.target.value)}
                 />
               </div>
+              
+              <div>
+                <Label htmlFor="actor">Actor/Actress</Label>
+                <Input
+                  id="actor"
+                  value={actor}
+                  onChange={(e) => setActor(e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <Label>Release Year: {yearRange[0]} - {yearRange[1]}</Label>
+                <Slider
+                  value={[yearRange[0], yearRange[1]]}
+                  min={1900}
+                  max={new Date().getFullYear()}
+                  step={1}
+                  onValueChange={(value) => setYearRange([value[0], value[1]])}
+                  className="mt-2"
+                />
+              </div>
+              
+              <div>
+                <Label>Rating: {ratingRange[0]} - {ratingRange[1]}</Label>
+                <Slider
+                  value={[ratingRange[0], ratingRange[1]]}
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  onValueChange={(value) => setRatingRange([value[0], value[1]])}
+                  className="mt-2"
+                />
+              </div>
+              
+              <div>
+                <Label className="block mb-2">Genres</Label>
+                <GenreCheckboxes 
+                  selectedGenres={selectedGenres}
+                  onGenreChange={handleGenreChange}
+                />
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label>Release Year: {yearRange[0]} - {yearRange[1]}</Label>
-              <Slider 
-                defaultValue={yearRange} 
-                min={1900} 
-                max={currentYear} 
-                step={1}
-                onValueChange={setYearRange}
-              />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={handleSearch} className="flex-1">Search</Button>
+              <Button variant="outline" onClick={handleReset} className="flex-1">Reset</Button>
             </div>
-            
-            <Separator className="my-4" />
-            
-            <div className="space-y-2">
-              <Label>Genres</Label>
-              <GenreCheckboxes 
-                selectedGenres={selectedGenres}
-                onGenreChange={handleGenreChange}
-              />
-            </div>
-            
-            <div className="pt-4">
-              <Button onClick={handleSearch} className="w-full md:w-auto">
-                Search Movies
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {searchPerformed && (
-          <>
-            <h2 className="text-xl font-semibold mb-4">
-              Search Results: {searchResults.length} {searchResults.length === 1 ? 'movie' : 'movies'} found
-            </h2>
-            
-            {searchResults.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {searchResults.map((movie) => (
-                  <MovieCard key={movie.id} movie={movie} />
+          </div>
+          
+          <div>
+            <h2 className="text-xl font-bold mb-4">Results ({results.length})</h2>
+            {results.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {results.map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    id={movie.id}
+                    title={movie.title}
+                    year={movie.year}
+                    genre={movie.genre}
+                    poster={movie.poster}
+                    rating={movie.rating}
+                  />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-10">
-                <p className="text-lg text-muted-foreground">No movies found matching your criteria.</p>
-                <p className="mt-2">Try adjusting your search filters.</p>
+              <div className="text-center py-12 text-muted-foreground">
+                No results found. Try adjusting your search criteria.
               </div>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </PageLayout>
   );
