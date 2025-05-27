@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import PageLayout from "@/components/layout/PageLayout";
 import SearchBar from "@/components/movies/SearchBar";
@@ -43,7 +42,7 @@ const AdvancedSearch = () => {
       }
       
       // Filter by actor
-      if (actor && !movie.cast.some(actor => actor.toLowerCase().includes(actor.toLowerCase()))) {
+      if (actor && movie.actors && !movie.actors.some(actorName => actorName.toLowerCase().includes(actor.toLowerCase()))) {
         return false;
       }
       
@@ -53,7 +52,7 @@ const AdvancedSearch = () => {
       }
       
       // Filter by rating
-      if (movie.rating < ratingRange[0] || movie.rating > ratingRange[1]) {
+      if (movie.rating && (movie.rating < ratingRange[0] || movie.rating > ratingRange[1])) {
         return false;
       }
       
