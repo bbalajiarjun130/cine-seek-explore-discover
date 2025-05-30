@@ -56,7 +56,6 @@ export const addMovies = async (req, res) => {
 
 export const searchMovies = async (req, res) => {
     const { query } = req.body;
-    console.log('Search query:', query);
 
     try {
         const embedResponse = await axios.post(
@@ -73,7 +72,6 @@ export const searchMovies = async (req, res) => {
         )
 
         const queryEmbedding = embedResponse.data.data[0].embedding;
-        console.log('Query embedding:', queryEmbedding);
 
         const movies = await Movie.find({}, {
             title: 1,
