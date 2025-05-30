@@ -1,17 +1,24 @@
 import express from 'express';
 import connectDB from './config/config.js';
 import movieRoutes from './routes/movieRoutes.js';
+import bodyParser from 'body-parser';
 import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 
+app.use(cors({
+  origin: 'http://localhost:8080',
+}));
+
 // Middleware to parse JSON
 app.use(express.json());
+app.use(bodyParser.json());
 
 // Connect to the database
 connectDB();
-
-app.use(cors());
 
 // Basic route
 app.get('/', (req, res) => {
