@@ -10,6 +10,37 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
+export const getMovies = async (req, res) => {
+    try {
+        const movies = await Movie.find({}, '-embedding') // Exclude embedding field
+        .sort({ rating: -1 }) // Sort by rating
+        .limit(6); // Limit to 10 results
+
+        res.status(200).json(movies);
+    } catch (error) {
+        console.error('Error fetching movies:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const getEmbedding = async (text) => {
+  const response = await axios.post(
+    "https://api.openai.com/v1/embeddings",
+    {
+      input: text,
+      model: "text-embedding-ada-002",
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+    }
+  );
+
+  return response.data.data[0].embedding;
+};
+
 export const addMovies = async (req, res) => {
     try {
         const {
@@ -30,7 +61,7 @@ export const addMovies = async (req, res) => {
         // Get embedding from OpenAI
         const embeddingResponse = await openai.embeddings.create({
             model: 'text-embedding-ada-002',
-            input: description,
+            input: plot,
         });
       
         const embedding = embeddingResponse.data[0].embedding;
@@ -44,6 +75,7 @@ export const addMovies = async (req, res) => {
             plot,
             rating,
             actors,
+            embedding, // Add the embedding field
         });
 
         const savedMovie = await newMovie.save();

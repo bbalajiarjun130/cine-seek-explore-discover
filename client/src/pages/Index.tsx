@@ -1,18 +1,41 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PageLayout from "@/components/layout/PageLayout";
 import SearchBar from "@/components/movies/SearchBar";
 import MovieCard from "@/components/movies/MovieCard";
 import { Button } from "@/components/ui/button";
-import { mockMovies } from "@/data/mockMovies";
 import { Movie } from "@/types/movie";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
-  const [featuredMovies, setFeaturedMovies] = useState<Movie[]>(mockMovies);
+  const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const res = await fetch("/api/movies", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch featured movies");
+        const data = await res.json();
+        setFeaturedMovies(data);
+      } catch (err) {
+        console.error("Error loading featured movies:", err);
+        setError("Unable to load featured movies.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeatured();
+  }, []);
 
   const handleSearch = (query: string) => {
     if (query.length > 0) {

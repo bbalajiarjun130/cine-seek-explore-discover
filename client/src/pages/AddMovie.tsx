@@ -63,28 +63,47 @@ const AddMovie = () => {
     }
   });
 
-  const onSubmit = (data: MovieFormValues) => {
+  const onSubmit = async (data: MovieFormValues) => {
     setIsSubmitting(true);
-    
-    // Convert actors string to array
+
     const formattedData = {
       ...data,
-      actors: data.actors ? data.actors.split(",").map(a => a.trim()) : undefined
+      actors: data.actors ? data.actors.split(",").map((a) => a.trim()) : [],
     };
-    
-    // Simulate API submission
-    setTimeout(() => {
-      console.log("Submitted movie:", formattedData);
-      setIsSubmitting(false);
-      
+
+    try {
+      const response = await fetch("/api/movies/add-movie", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formattedData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add movie");
+      }
+
+      const resData = await response.json();
+
       toast({
         title: "Movie added successfully!",
-        description: `"${data.title}" has been added to the database.`
+        description: `"${resData.title}" has been added to the database.`,
       });
-      
+
       form.reset();
-    }, 1000);
+    } catch (error) {
+      console.error("Error adding movie:", error);
+      toast({
+        title: "Error",
+        description: "Something went wrong while adding the movie.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
 
   return (
     <PageLayout>

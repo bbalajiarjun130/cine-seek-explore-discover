@@ -1,7 +1,9 @@
 import express from 'express';
-import {addMovies, advancedSearch, searchMovies} from '../controllers/movieController.js';
+import {addMovies, advancedSearch, getMovies, searchMovies} from '../controllers/movieController.js';
 
 const router = express.Router();
+
+router.get('/', getMovies);
 
 router.post('/add-movie', addMovies);
 
