@@ -9,6 +9,7 @@ import { mockMovies } from "@/data/mockMovies";
 import { Movie } from "@/types/movie";
 import MovieCard from "@/components/movies/MovieCard";
 import { GenreCheckboxes } from "@/components/movies/GenreCheckboxes";
+import { request } from "http";
 
 const AdvancedSearch = () => {
   const [title, setTitle] = useState("");
@@ -27,46 +28,34 @@ const AdvancedSearch = () => {
     }
   };
 
-  const handleSearch = () => {
-    // In a real app, this would be an API call
-    // For now, we'll filter the mock data
-    const filtered = mockMovies.filter(movie => {
-      // Filter by title
-      if (title && !movie.title.toLowerCase().includes(title.toLowerCase())) {
-        return false;
-      }
-      
-      // Filter by director
-      if (director && !movie.director.toLowerCase().includes(director.toLowerCase())) {
-        return false;
-      }
-      
-      // Filter by actor
-      if (actor && movie.actors && !movie.actors.some(actorName => actorName.toLowerCase().includes(actor.toLowerCase()))) {
-        return false;
-      }
-      
-      // Filter by year
-      if (movie.year < yearRange[0] || movie.year > yearRange[1]) {
-        return false;
-      }
-      
-      // Filter by rating
-      if (movie.rating && (movie.rating < ratingRange[0] || movie.rating > ratingRange[1])) {
-        return false;
-      }
-      
-      // Filter by genres
-      if (selectedGenres.length > 0 && 
-          !selectedGenres.some(genre => movie.genre.includes(genre))) {
-        return false;
-      }
-      
-      return true;
+  const handleSearch =  async () => {
+    try {
+      const res = await fetch("/api/movies/advanced-search", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title,
+        genre: selectedGenres.join(', '),  // backend expects a string
+        actors: actor ? [actor.trim()] : [],          // array of actors
+        year: yearRange,                   // array of [min, max] years
+        director,
+        rating: ratingRange                // array of [min, max] ratings
+      })
     });
-    
-    setResults(filtered);
-  };
+    if (!res.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const movies = await res.json();
+    console.log('Search results:', movies);
+    setResults(movies);
+
+  } catch (error) {
+    console.error('Search failed:', error);
+  }
+};
 
   const handleReset = () => {
     setTitle("");

@@ -136,22 +136,56 @@ export const searchMovies = async (req, res) => {
 }
 
 export const advancedSearch = async (req, res) => {
-    const { title, genre, year, director, rating } = req.body;
+  const { title, genre, actors, year, director, rating } = req.body;
 
-    try {
-        const actualQuery = {}  
-        if (title) actualQuery.title = { $regex: title, $options: 'i' };
-        if (genre) actualQuery.genre = { $regex: genre, $options: 'i' };
-        if (year) actualQuery.releasedYear = year;
-        if (director) actualQuery.Director = { $regex: director, $options: 'i' };
-        if (rating) actualQuery.rating = rating;
+  try {
+    const actualQuery = {};
 
-        const movies = await Movie.find(actualQuery).select('-embedding');
-
-
-        res.json(movies);
-    } catch (error) {
-        console.error('Error searching movies:', error);
-        res.status(500).json({ error: 'Internal server error' });
+    // Title - case-insensitive partial match
+    if (typeof title === 'string' && title.trim() !== '') {
+      actualQuery.title = { $regex: title.trim(), $options: 'i' };
     }
-}
+
+    // Genre - accepts either a string (comma-separated) or array
+    if (typeof genre === 'string' && genre.trim() !== '') {
+      const genreArray = genre.split(',').map(g => g.trim()).filter(Boolean);
+      if (genreArray.length > 0) {
+        actualQuery.genre = { $in: genreArray };
+      }
+    } else if (Array.isArray(genre) && genre.length > 0) {
+      actualQuery.genre = {
+        $in: genre.map(g => g.trim()).filter(Boolean)
+      };
+    }
+
+    // Actors - partial match in array
+    if (Array.isArray(actors) && actors.length > 0) {
+      actualQuery.actors = {
+        $in: actors
+          .filter(actor => typeof actor === 'string' && actor.trim() !== '')
+          .map(actor => actor.trim())
+      };
+    }
+
+    // Year - numeric range
+    if (Array.isArray(year) && year.length === 2) {
+      actualQuery.year = { $gte: year[0], $lte: year[1] };
+    }
+
+    // Director - case-insensitive partial match
+    if (typeof director === 'string' && director.trim() !== '') {
+      actualQuery.director = { $regex: director.trim(), $options: 'i' };
+    }
+
+    // Rating - numeric range
+    if (Array.isArray(rating) && rating.length === 2) {
+      actualQuery.rating = { $gte: rating[0], $lte: rating[1] };
+    }
+
+    const movies = await Movie.find(actualQuery).select('-embedding');
+    res.json(movies);
+  } catch (error) {
+    console.error('Error searching movies:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
