@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
 app.use('/api/movies', movieRoutes);
 
 // Start the server
-const PORT = 6000;
+const PORT = process.env.PORT || 6000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
