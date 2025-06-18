@@ -9,13 +9,16 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     proxy: {
-      // Redirect /api calls to your backend server
       '/api': {
         target: 'http://localhost:6000',
         changeOrigin: true,
         secure: false,
       },
     },
+  },
+  build: {
+    outDir: 'dist', // ← make sure this is declared
+    emptyOutDir: true,
   },
   plugins: [
     react(),
@@ -27,4 +30,5 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }));
+
 
