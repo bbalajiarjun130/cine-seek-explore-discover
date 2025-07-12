@@ -1,11 +1,10 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rootDirectory": "client",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "http://localhost:6000/api/$1"
+      "destination": "https://cine-seek-explore-discover.onrender.com/api/$1"
     }
   ]
 }
